@@ -482,7 +482,7 @@ pub(crate) fn declare_opc_c2pa_content_type(
 
             for index in 0..reader.len() {
                 let file = reader.by_index_raw(index)?;
-                if file.name() == OPC_CONTENT_TYPES_PATH {
+                if file.name()? == OPC_CONTENT_TYPES_PATH {
                     let mut options =
                         SimpleFileOptions::DEFAULT.compression_method(CompressionMethod::Deflated);
                     if let Some(time) = file.last_modified() {
@@ -708,7 +708,10 @@ where
         let file = reader
             .by_index_raw(index)
             .map_err(|e| Error::InvalidAsset(format!("could not read the ZIP: {e}")))?;
-        let file_name = file.name().to_owned();
+        let file_name = file
+            .name()
+            .map_err(|e| Error::InvalidAsset(format!("could not read the ZIP: {e}")))?
+            .into_owned();
 
         let path = match file.enclosed_name() {
             Some(path) => path,
@@ -730,7 +733,7 @@ where
             path,
             header_start,
             data_end: data_start + file.compressed_size(),
-            using_data_descriptor: metadata.using_data_descriptor,
+            using_data_descriptor: metadata.is_using_data_descriptor(),
             large_file: metadata.large_file,
         });
     }
