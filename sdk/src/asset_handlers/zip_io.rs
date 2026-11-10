@@ -1043,10 +1043,11 @@ mod tests {
         for index in 0..original.len() {
             let a = original.by_index_raw(index).unwrap();
             let b = copy.by_index_raw(index).unwrap();
-            assert_eq!(a.name(), b.name());
-            if a.name() != OPC_CONTENT_TYPES_PATH {
-                assert_eq!(a.crc32(), b.crc32(), "{}", a.name());
-                assert_eq!(a.compressed_size(), b.compressed_size(), "{}", a.name());
+            let name = a.name().unwrap().into_owned();
+            assert_eq!(name, b.name().unwrap());
+            if name != OPC_CONTENT_TYPES_PATH {
+                assert_eq!(a.crc32(), b.crc32(), "{name}");
+                assert_eq!(a.compressed_size(), b.compressed_size(), "{name}");
             }
         }
         drop((original, copy));
@@ -1169,7 +1170,10 @@ mod tests {
             assert_eq!(unreferenced_bytes(second.get_ref()), 0);
             let names = |zip: &Vec<u8>| {
                 let archive = ZipArchive::new(Cursor::new(zip)).unwrap();
-                archive.file_names().map(str::to_owned).collect::<Vec<_>>()
+                archive
+                    .file_names()
+                    .map(|name| name.unwrap().into_owned())
+                    .collect::<Vec<_>>()
             };
             assert_eq!(names(first.get_ref()), names(second.get_ref()));
         }
